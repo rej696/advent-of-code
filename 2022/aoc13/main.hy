@@ -3,43 +3,70 @@
 
 (defn read-input [[filename "input"]]
   (with [f (open filename "r")]
-      (map (fn [pair] (.split pair "\n"))
-           (.split (.read f) "\n\n"))))
+    (.split (.read f) "\n\n")))
 
-;; (get (get (list (read-input)) 0) 0)
-;; (. (list (read-input)) [0] [0])
+; parse whole input
+(defn parse-input
+  [pairs]
+  (list (map parse-pair pairs)))
 
-(defn parse
-  [[token]]
-  (cond
-    (= head "[") True
-    (= head "]") False
-    True (int head)))
+; parse each pair in the input
+(defn parse-pair
+  [pair]
+  (list (map parse-packet (.split pair "\n"))))
 
-; parse string list representation
-(defn read-list
-  [tokens]
-  (lfor
-    token tokens
-    (parse token)))
+; parse each packet in the pair
+(defn parse-packet
+  [packet]
+  (parse-list 1 (tokenise packet)))
 
+; convert string into parsable tokens
 (defn tokenise
   [packet]
   (-> (.replace packet "[" "[,")
       (.replace "]" ",]")
       (.split ",")))
 
+; parse list of tokens
+(defn parse-list
+  [pos tokens]
+  (lfor
+    i (range pos (len tokens))
+    (let [token (get tokens i)]
+      (cond
+        (= token "[") (parse-list (+ i 1) tokens)
+        (= token "]") (break)
+        True (parse-atom token)))))
+
+; parse an atom (could be other types than int)
+(defn parse-atom
+  [token]
+  (int token))
+
+; TODO
+; compare according to the rules return true if right so far, else false
+(defn compare
+  [left right])
+
+; TODO figure out logic for this
+(defn compare-packet
+  [left right]
+  (let [[left-head #* left-tail] left
+        [right-head #* right-tail] right]
+    (cond
+      (= (len left-tail) 0) 1)
+    (if (compare left-head right-head))))
 
 
 ; returns 0 or 1 depending on if right order or not
 (defn handle-pair
   [pair]
   (let [[left right] pair]
-    (print (tokenise left))))
-
-(handle-pair (get (list (read-input)) 0))
+    (if (compare left right)
+      ()))) ; TODO
 
 ; sum results of each pair
 (defn part1
-  [pairs]
-  (map handle-pair pairs))
+  []
+  (sum (map handle-pair
+            (parse-input (read-input)))))
