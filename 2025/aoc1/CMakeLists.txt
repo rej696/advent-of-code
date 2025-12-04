@@ -7,6 +7,7 @@ set(FILE_CONTENT "R\"(${FILE_CONTENT})\"")
 file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/input.txt ${FILE_CONTENT})
 
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(aoc main.cpp)
 

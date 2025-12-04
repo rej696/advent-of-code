@@ -162,10 +162,9 @@ void part1(std::string_view data) {
         | std::views::transform([](auto sv) { return std::string_view(sv); })
         | std::views::filter([](auto sv) { return !sv.empty(); })
         | std::views::transform([](auto sv) {
-              // std::cout << std::string_view(sv) << "\n";
-              return Entry {std::string_view(sv)};
+              return Entry {sv};
           })
-        | fold(State {}, [](State<int,50> state, Entry entry) {
+        | fold(State {}, [](auto state, auto entry) {
             if (logging) std::cout << "state angle: " << state.angle.value() << ", entry: " << entry.sv;
             if (entry.direction == Direction::right) {
                 state.angle += entry.angle;
@@ -195,7 +194,7 @@ void part2(std::string_view data) {
         | std::views::transform([](auto sv) { return std::string_view(sv); })
         | std::views::filter([](auto sv) { return !sv.empty(); })
         | std::views::transform([](auto sv) {
-              return Entry {std::string_view(sv)};
+              return Entry {sv};
           })
         | fold(State {}, [](auto state, auto entry) {
             if (logging) std::cout << "state angle: " << state.angle.value() << ", entry: " << entry.sv << "\n";
