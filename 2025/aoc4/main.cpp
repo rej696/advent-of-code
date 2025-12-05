@@ -160,83 +160,30 @@ constexpr std::string_view input = R"(@@.@..@@@@@@..@@.@...@.@.@.@@@..@.@@@@@.@.
 @.@@@@..@@.@@@@@.@.@..@.@.@@..@@..@@@@.@@@@@..@@@@..@@@..@@@@.@@@@@..@..@@....@@@.@.@@@.@.@@@...@@@@@@@@@@@.@@@@@.@.@@..@@.@@..@@@.@.@@@@@.@
 @@.@@@@@.@...@@@@@@@.@@@.@@@....@@@@@@@..@@@.@@.@.....@.@@@@@@.@.@.@@@@....@@.@@@..@@@@...@.@@@@@@@@.@@@.@@.@..@.@@@@@@@.@.@.@@@@@..@@.@.@@.)"sv;
 
-template <typename T>
+constexpr int idxs[8][2] {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
+
+template <typename T, bool part2 = false>
 T run(std::string_view input) {
     auto grid = input
         | std::views::split('\n')
         | std::views::transform([](auto subrange) { return std::string_view(subrange); })
-        | std::views::transform([](auto sv) {
-            return std::vector<char>(sv.begin(), sv.end());
-        })
+        | std::views::transform([](auto sv) { return std::vector<char>(sv.begin(), sv.end()); })
         | std::ranges::to<std::vector<std::vector<char>>>();
 
-    constexpr int idxs[8][2] {
-        {-1, -1},
-        {-1, 0},
-        {-1, 1},
-        {0, -1},
-        {0, 1},
-        {1, -1},
-        {1, 0},
-        {1, 1}
-    };
-    const auto x_size = grid.size();
-    const auto y_size = grid[0].size();
-
-    T total = 0;
-    for (auto i: std::views::iota(std::size_t{0}, x_size)) {
-        for (auto j: std::views::iota(std::size_t{0}, y_size)) {
-            if (grid[i][j] != '@') continue;
-            int count = 0;
-            for (auto idx : idxs) {
-                auto x = i + idx[0];
-                auto y = j + idx[1];
-                if ((x < 0) || (x >= x_size)) continue;
-                if ((y < 0) || (y >= y_size)) continue;
-
-                auto adjacent = grid[x][y];
-                if (adjacent == '@') count++;
-            }
-            if (count < 4) {
-                total++;
-            }
-        }
-    }
-    return total;
-}
-
-template <typename T>
-T run2(std::string_view input) {
-    auto grid = input
-        | std::views::split('\n')
-        | std::views::transform([](auto subrange) { return std::string_view(subrange); })
-        | std::views::transform([](auto sv) {
-            return std::vector<char>(sv.begin(), sv.end());
-        })
-        | std::ranges::to<std::vector<std::vector<char>>>();
-
-    constexpr int idxs[8][2] {
-        {-1, -1},
-        {-1, 0},
-        {-1, 1},
-        {0, -1},
-        {0, 1},
-        {1, -1},
-        {1, 0},
-        {1, 1}
-    };
     const auto x_size = grid.size();
     const auto y_size = grid[0].size();
 
     T total = 0;
     T prev = 0;
+
     do {
-        prev = total;
+        if constexpr (part2) prev = total;
+
         std::vector<std::pair<int, int>> coords {};
         for (auto i: std::views::iota(std::size_t{0}, x_size)) {
             for (auto j: std::views::iota(std::size_t{0}, y_size)) {
                 if (grid[i][j] != '@') continue;
-                int count = 0;
+                auto count = 0;
                 for (auto idx : idxs) {
                     auto x = i + idx[0];
                     auto y = j + idx[1];
@@ -247,24 +194,29 @@ T run2(std::string_view input) {
                     if (adjacent == '@') count++;
                 }
                 if (count < 4) {
-                    coords.emplace_back(i, j);
+                    if constexpr (part2) coords.emplace_back(i, j);
                     total++;
                 }
             }
         }
 
-        // remove bog rolls from grid
-        for (auto coord : coords) {
-            grid[coord.first][coord.second] = '.';
+        if constexpr (part2) {
+            // remove bog rolls from grid
+            for (auto coord : coords) {
+                grid[coord.first][coord.second] = '.';
+            }
+        } else {
+            prev = total;
         }
 
     } while (total != prev);
+
     return total;
 }
 
 int main() {
     std::cout << "part1 test: " << run<uint64_t>(test_input) << "\n";
     std::cout << "part1 test: " << run<uint64_t>(input) << "\n";
-    std::cout << "part2 test: " << run2<uint64_t>(test_input) << "\n";
-    std::cout << "part2 test: " << run2<uint64_t>(input) << "\n";
+    std::cout << "part2 test: " << run<uint64_t, true>(test_input) << "\n";
+    std::cout << "part2 test: " << run<uint64_t, true>(input) << "\n";
 }
