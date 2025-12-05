@@ -1,15 +1,11 @@
 //usr/bin/g++ --std=c++23 "$0" && exec ./a.out "$@"
+#include <algorithm>
 #include <cmath>
 #include <iostream>
-#include <optional>
-#include <algorithm>
-#include <typeinfo>
-#include <string_view>
 #include <ranges>
-#include <algorithm>
-#include <vector>
+#include <string_view>
 #include <utility>
-#include <cassert>
+#include <vector>
 
 using namespace std::literals;
 
@@ -218,95 +214,8 @@ constexpr std::string_view input = R"(531331322213322323222217322222132223224352
 2212334322343334333444423132132353333334343332232343333332323434233533333335432322312333223332223434
 4536334834426354666653548333733764333733325524343558454435334323934332564372337559263534255825234943)"sv;
 
-template <typename T> std::string_view type_name() {
-    std::string_view func_name(__PRETTY_FUNCTION__);
-    std::string_view tmp = func_name.substr(func_name.find_first_of("["));
-    std::string_view type = tmp.substr(0, tmp.size());
-    return type;
-};
-
-template <typename T> std::optional<T> vtonum(std::string_view const view)
-{
-    if (view.empty()) {
-        return false;
-    }
-
-    char const *first = view.data();
-    char const *last = view.data() + view.length();
-
-    T value {};
-
-    std::from_chars_result res = std::from_chars(first, last, value);
-
-    if ((res.ec != std::errc()) || (res.ptr != last)) {
-        return {};
-    }
-
-    return value;
-}
-
-template <typename T, typename F>
-struct FoldAdaptor {
-    T init;
-    F func;
-
-    template <std::ranges::input_range R>
-    T operator()(R &&range) const {
-        T s = init;
-        for (auto &&e: range) {
-            s = func(std::move(s), e);
-        }
-        return s;
-    }
-
-    template <std::ranges::input_range R>
-    friend T operator|(R &&range, const FoldAdaptor &f) {
-        return f(std::forward<R>(range));
-    }
-
-};
-
-template <typename T, typename F>
-auto fold(T init, F func) {
-    return FoldAdaptor<T, F> {init, func};
-}
-
-template <typename T>
-T run(std::string_view input, bool logging) {
-    return input
-        | std::views::split('\n')
-        | std::views::transform([](auto subrange) { return std::string_view(subrange); })
-        | std::views::transform([logging](auto sv) {
-            if (logging) std::cout << sv << ": ";
-            auto digits = sv
-                | std::views::enumerate
-                | std::views::filter([](auto p) {auto [i, v] = p; return std::isdigit(static_cast<unsigned char>(v));})
-                | std::views::transform([](auto p) {auto [i, v] = p; return std::pair {i, v - '0'};})
-                | std::ranges::to<std::vector<std::pair<int, int>>>();
-
-            std::partial_sort(digits.begin(), digits.begin() + 1, digits.end() - 1, [](const auto &p1, const auto &p2) {
-                return p1.second > p2.second;
-            });
-            auto p1 = digits[0];
-
-            auto s = std::span{digits.begin() + p1.first + 1, digits.end() };
-            std::partial_sort(s.begin(), s.begin() + 1, s.end(), [](const auto &p1, const auto &p2) {
-                return p1.second > p2.second;
-            });
-            auto p2 = s[0];
-
-            if (logging) {
-                std::cout << "[" << p1.first << "]=" << p1.second << ", ";
-                std::cout << "[" << p2.first << "]=" << p2.second << ": ";
-                std::cout << p1.second << p2.second << "\n";
-            }
-            return p1.second * 10 + p2.second;
-        })
-        | fold(0, [](auto acc, auto value) { return acc + value; });
-}
-
 template <typename T, int N = 2>
-T run2(std::string_view input, bool logging) {
+T run(std::string_view input, bool logging) {
     auto values = input
         | std::views::split('\n')
         | std::views::transform([](auto subrange) { return std::string_view(subrange); })
@@ -344,32 +253,9 @@ T run2(std::string_view input, bool logging) {
     return total;
 }
 
-template <typename T>
-class myint {
-public:
-    myint(T v) :
-        inner{v} {}
-    void operator+=(const myint &other) {
-        inner += other.inner;
-    }
-
-    T get(void) const {
-        return inner;
-    }
-
-private:
-    friend std::ostream& operator<<(std::ostream& os, const myint& self)
-    {
-        return os << self.get();
-    }
-    T inner;
-};
-
-
-
 int main() {
-    std::cout << "part1 test: " << run2<uint64_t, 2>(test_input, false) << "\n";
-    std::cout << "part1: " << run2<uint64_t, 2>(input, false) << "\n";
-    std::cout << "part2 test: " << run2<uint64_t, 12>(test_input, false) << "\n";
-    std::cout << "part2: " << run2<uint64_t, 12>(input, false) << "\n";
+    std::cout << "part1 test: " << run<uint64_t, 2>(test_input, false) << "\n";
+    std::cout << "part1: " << run<uint64_t, 2>(input, false) << "\n";
+    std::cout << "part2 test: " << run<uint64_t, 12>(test_input, false) << "\n";
+    std::cout << "part2: " << run<uint64_t, 12>(input, false) << "\n";
 }
